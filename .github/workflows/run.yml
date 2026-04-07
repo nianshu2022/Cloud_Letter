@@ -1,0 +1,47 @@
+name: Cloud Letter Daily Push
+
+on:
+  workflow_dispatch:  # 允许在外部界面手动点击触发
+  schedule:
+    # 每天北京时间早上 7:00 运行 (UTC 时间前一天 23:00)
+    - cron: '0 23 * * *'
+
+jobs:
+  run-daily-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出系统源码
+        uses: actions/checkout@v3
+
+      - name: 挂载 Python 3 运行时
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 安装项目依赖包
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 唤醒并执行推送引擎
+        # 将从 GitHub Secrets 中持有的安全数据注入当前 Serverless 环境变量容器
+        # 只要您在 Repo 的 Settings -> Secrets 里配置过同名变量，这里会自动解密拾取
+        env:
+          CORPID: ${{ secrets.CORPID }}
+          CORPSECRET: ${{ secrets.CORPSECRET }}
+          AGENTID: ${{ secrets.AGENTID }}
+          # 若存在微信测试号体系：
+          APPID: ${{ secrets.APPID }}
+          APPSECRET: ${{ secrets.APPSECRET }}
+          USERID: ${{ secrets.USERID }}
+          TEMPLATEID: ${{ secrets.TEMPLATEID }}
+          # 常用三方应用凭证：
+          QWEATHER: ${{ secrets.QWEATHER }}
+          CITY: ${{ secrets.CITY }}
+          TIAN: ${{ secrets.TIAN }}
+          TARGETNAME: ${{ secrets.TARGETNAME }}
+          TARGETDAY: ${{ secrets.TARGETDAY }}
+          BEGINNAME: ${{ secrets.BEGINNAME }}
+          BEGINDAY: ${{ secrets.BEGINDAY }}
+        run: |
+          python main.py
